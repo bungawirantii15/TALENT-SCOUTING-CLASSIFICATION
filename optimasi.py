@@ -25,7 +25,7 @@ class GeneticFeatureSelector:
             return 0
         X_sel = self.X.iloc[:, chromosome == 1]
         X_test_sel = self.X_test.iloc[:, chromosome == 1]
-        model = LogisticRegression(max_iter=1000, solver=self.solver, C=self.C, random_state=42)
+        model = LogisticRegression(max_iter=300, solver=self.solver, C=self.C, random_state=42)
         model.fit(X_sel, self.y)
         pred = model.predict(X_test_sel)
         return accuracy_score(self.y_test, pred)
@@ -127,7 +127,7 @@ def train_hybrid_ga_lr(X_train, X_test, y_train, y_test, C_val, solver, pop, gen
     best = ga.evolve()
     selected_features = X_train.columns[best == 1]
 
-    model = LogisticRegression(C=C_val, solver=solver, max_iter=1000, random_state=42)
+    model = LogisticRegression(C=C_val, solver=solver, max_iter=300, random_state=42)
     model.fit(X_train[selected_features], y_train)
 
     pred = model.predict(X_test[selected_features])

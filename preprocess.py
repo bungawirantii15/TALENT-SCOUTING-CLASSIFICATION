@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder, LabelEncoder, MinMaxScaler
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder, MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 
 def preprocess_dataset(df):
@@ -26,7 +26,7 @@ def preprocess_dataset(df):
     # Normalisasi
     categorical_columns = ['POTENSI', 'JENIS KELAMIN (PA/PI)_PI']
     number_columns = [col for col in df.columns if col not in categorical_columns]
-    scaler = MinMaxScaler()
+    scaler = StandardScaler()
     df[number_columns] = scaler.fit_transform(df[number_columns])
     
     #split data
