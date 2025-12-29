@@ -25,15 +25,29 @@ class GeneticFeatureSelector:
             return 0
         X_sel = self.X.iloc[:, chromosome == 1]
         X_test_sel = self.X_test.iloc[:, chromosome == 1]
-        model = LogisticRegression(max_iter=300, solver=self.solver, C=self.C, random_state=42)
+        model = LogisticRegression(max_iter=1000, solver=self.solver, C=self.C, random_state=42)
         model.fit(X_sel, self.y)
         pred = model.predict(X_test_sel)
         return accuracy_score(self.y_test, pred)
+
+    # ------------------------------------------------------
+    # 3. Seleksi: Roulette Wheel Selection
+    # ------------------------------------------------------
+
+    def selection(self, population, fitness_scores):
+        if np.sum(fitness_scores) == 0:
+            idx = np.random.choice(len(population), size=2, replace=False)
+            return population[idx]
+
+        probabilities = fitness_scores / np.sum(fitness_scores)
+        idx = np.random.choice(len(population), size=2, replace=False, p=probabilities)
+        return population[idx]
 
     def mutate(self, chromosome):
         for i in range(self.n_features):
             if random.random() < self.mutation_rate:
                 chromosome[i] = 1 - chromosome[i]
+
         return chromosome
 
     def crossover(self, parent1, parent2):
@@ -46,35 +60,58 @@ class GeneticFeatureSelector:
 
     def evolve(self):
         population = self.init_population()
-        for gen in range(self.generations):
+        best_chromosome = None
+        best_score = 0
+
+        for gen in range(1, self.generations + 1):
             fitness_scores = np.array([self.fitness(ind) for ind in population])
-            best_idx = fitness_scores.argmax()
-            best_fit = fitness_scores[best_idx]
+            best_idx = np.argmax(fitness_scores)
 
-            print(f"Generasi {gen + 1} -> Fitness Terbaik  : {best_fit:.4f}")
+            if fitness_scores[best_idx] > best_score:
+                best_score = fitness_scores[best_idx]
+                best_chromosome = population[best_idx]
 
-            parents_idx = fitness_scores.argsort()[-2:]
-            parent1, parent2 = population[parents_idx]
+            print(f"Generasi {gen:02d} | Fitness terbaik saat ini: {best_score:.4f}")
 
-            new_population = []
-            while len(new_population) < self.population_size:
-                child1, child2 = self.crossover(parent1, parent2)
-                new_population.append(self.mutate(child1))
-                new_population.append(self.mutate(child2))
+            # ------------------------------------------------------
+            # 🔥 ELITISME = 20% dari populasi
+            # ------------------------------------------------------
 
-            population = np.array(new_population[:self.population_size])
+            elitism_count = max(1, int(self.population_size * 0.20))
+            top_idx = np.argsort(fitness_scores)[-elitism_count:]
+            elite_individuals = [population[i].copy() for i in top_idx]
 
-        final_fitness = np.array([self.fitness(ind) for ind in population])
-        best_idx = final_fitness.argmax()
+            # Children dimulai dari elit
+            children = elite_individuals.copy()
+            
+            # ------------------------------------------------------
+            # Seleksi parent & menghasilkan anak baru
+            # -----------------------------------------------------
 
-        print("Hasil Akhir GA")
-        print(f"Kromosom Terbaik : {population[best_idx]}")
-        print(f"Fitness Terbaik  : {final_fitness[best_idx]:.4f}")
+            while len(children) < self.population_size:
+                parents = self.selection(population, fitness_scores)
 
-        return population[best_idx]
+                p1 = parents[np.random.randint(0, 2)]
+                p2 = parents[np.random.randint(0, 2)]
+
+                c1, c2 = self.crossover(p1, p2)
+
+                children.append(self.mutate(c1))
+
+                if len(children) < self.population_size:
+                    children.append(self.mutate(c2))
+
+            population = np.array(children)
+
+        print("\nFitur terbaik ditemukan ✅")
+        print("Subset fitur terbaik:\n", best_chromosome)
+        print("Fitness terbaik:", best_score)
+
+        return best_chromosome
 
 
 def train_hybrid_ga_lr(X_train, X_test, y_train, y_test, C_val, solver, pop, gen, mutation, crossover):
+
     ga = GeneticFeatureSelector(
         X_train, y_train,
         X_test, y_test,
@@ -84,12 +121,13 @@ def train_hybrid_ga_lr(X_train, X_test, y_train, y_test, C_val, solver, pop, gen
         crossover_rate=crossover,
         C=C_val,
         solver = solver
+
     )
 
     best = ga.evolve()
     selected_features = X_train.columns[best == 1]
 
-    model = LogisticRegression(C=C_val, solver=solver, max_iter=300, random_state=42)
+    model = LogisticRegression(C=C_val, solver=solver, max_iter=1000, random_state=42)
     model.fit(X_train[selected_features], y_train)
 
     pred = model.predict(X_test[selected_features])
