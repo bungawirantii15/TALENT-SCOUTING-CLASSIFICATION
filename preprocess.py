@@ -34,6 +34,7 @@ def preprocess_dataset(df):
     df_x, df_y= df.drop(columns='POTENSI'), df['POTENSI']
 
     #pisahkan train dan test
-    df_train_x, df_test_x, df_train_y, df_test_y = train_test_split(df_x, df_y, test_size=0.2, random_state=42, stratify=df_y)
+    df_train_x, df_temp_x, df_train_y, df_temp_y = train_test_split(df_x, df_y, test_size=0.2, random_state=42, stratify=df_y)
+    df_test_x, df_val_x, df_test_y, df_val_y = train_test_split(df_temp_x, df_temp_y, test_size=0.5, random_state=42, stratify=df_temp_y)
 
-    return df_train_x, df_test_x, df_train_y, df_test_y
+    return df_train_x, df_test_x,df_val_x, df_train_y, df_test_y, df_val_y

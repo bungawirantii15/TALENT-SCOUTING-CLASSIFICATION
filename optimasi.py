@@ -4,11 +4,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
 class GeneticFeatureSelector:
-    def __init__(self, X, y, X_test, y_test, population_size, generations, mutation_rate, crossover_rate, C, solver):
+    def __init__(self, X, y, X_val, y_val, population_size, generations, mutation_rate, crossover_rate, C, solver):
         self.X = X
         self.y = y
-        self.X_test = X_test
-        self.y_test = y_test
+        self.X_val = X_val
+        self.y_val = y_val
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
@@ -24,11 +24,11 @@ class GeneticFeatureSelector:
         if chromosome.sum() == 0:
             return 0
         X_sel = self.X.iloc[:, chromosome == 1]
-        X_test_sel = self.X_test.iloc[:, chromosome == 1]
+        X_val_sel = self.X_val.iloc[:, chromosome == 1]
         model = LogisticRegression(max_iter=300, solver=self.solver, C=self.C, random_state=42)
         model.fit(X_sel, self.y)
-        pred = model.predict(X_test_sel)
-        return accuracy_score(self.y_test, pred)
+        pred = model.predict(X_val_sel)
+        return accuracy_score(self.y_val, pred)
 
     # ------------------------------------------------------
     # 3. Seleksi: Roulette Wheel Selection
@@ -110,11 +110,11 @@ class GeneticFeatureSelector:
         return best_chromosome
 
 
-def train_hybrid_ga_lr(X_train, X_test, y_train, y_test, C_val, solver, pop, gen, mutation, crossover):
+def train_hybrid_ga_lr(X_train, X_test, X_val, y_train, y_test, y_val, C_val, solver, pop, gen, mutation, crossover):
 
     ga = GeneticFeatureSelector(
         X_train, y_train,
-        X_test, y_test,
+        X_val, y_val,
         population_size=pop,
         generations=gen,
         mutation_rate=mutation,

@@ -194,7 +194,7 @@ if uploaded:
 
 
     # PREPROCESS
-    df_train_x, df_test_x, df_train_y, df_test_y = preprocess_dataset(df)
+    df_train_x, df_test_x, df_val_x, df_train_y, df_test_y, df_val_y = preprocess_dataset(df)
 
     st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
     st.markdown("<div class='section-title'>🔎 Preview Dataset (After Preprocessing)</div>", unsafe_allow_html=True)
@@ -274,7 +274,7 @@ if uploaded:
 
         else:
             acc, pred, selected_features = train_hybrid_ga_lr(
-                df_train_x, df_test_x, df_train_y, df_test_y,
+                df_train_x, df_test_x,df_val_x, df_train_y, df_test_y,df_val_y,
                 C_val, solver, pop, gen, mutation, crossover
             )
             st.success(f"Accuracy LR + GA: {acc:.4f}")
